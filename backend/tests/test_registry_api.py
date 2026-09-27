@@ -64,10 +64,12 @@ def test_config_returns_allowlisted_public_fields(api_client):
     comment_task = next(task for task in data["tasks"] if task["id"] == "comment")
     parsed = urlparse(comment_task["url"])
     query = parse_qs(parsed.query)
-    if '/intent/' in parsed.path:
-        assert query["text"][0] == data["comment_message"]
-    else:
-        assert 'text' not in query
+    # VOICE/Reply opens the X post composer prefilled with the share text and
+    # the repost link appended below via the url param.
+    assert '/intent/post' in parsed.path
+    assert query["text"][0] == data["share_text"]
+    repost_task = next(task for task in data["tasks"] if task["id"] == "repost")
+    assert query["url"][0] == repost_task["url"]
     assert len(data['comment_message']) > 0
     assert data['x_profile_url'] == 'https://x.com/LastZhood'
 

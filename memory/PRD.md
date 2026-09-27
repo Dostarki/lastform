@@ -92,3 +92,9 @@ Tasarım renk konusuna gelirsek eğer daha böyle project zomboid oyun tarzı ol
 - Test raporu iteration_3.json: UI NASA/fallback/handle switch/export ve mobil 390/320 geçti; 19/20 backend testi geçti. Tek fark, ara sunucunun HTTP Cache-Control başlığını no-store yapmasıydı; fotoğraf akışı bozuk değildi.
 - Gerçek önbellek davranışı `X-Avatar-Cache: HIT` ile ölçülebilir yapıldı. Test, ara sunucu no-store politikasını kabul edip aynı görselin sunucu belleğinden tekrar döndüğünü doğrulayacak şekilde düzeltildi.
 - Son doğrulama: 20/20 backend testi geçti (7 avatar + 13 mevcut kayıt regresyonu). JUnit: `/app/test_reports/pytest/avatar_final_results.xml`; kapanış notu `/app/test_reports/avatar_final_verification.md`. `yarn build` başarılı. Production API'ler gerçek; yalnızca test izolasyonunda kontrollü sahte yanıtlar kullanıldı.
+
+## VOICE (Reply) post akışı — 2026-06
+- Kullanıcı isteği: "VOICE kısmında Reply basınca X açılacak ve X'te post paylaşımı yapacak; yazı altına son RT linki gelecek."
+- `settings.py` comment görevi URL'si artık `https://x.com/intent/post?text={X_SHARE_TEXT}&url={X_REPOST_LINK}` olarak kuruluyor. X post paylaşma ekranı açılır, metin X_SHARE_TEXT, altına X_REPOST_LINK (repost görev linki) eklenir.
+- Metin/link `.env`'den yönetilir: `X_SHARE_TEXT` ve `X_REPOST_LINK`.
+- Test: `tests/test_registry_api.py` VOICE için text==share_text ve url==repost_task.url doğrulayacak şekilde güncellendi; 13/13 geçti.

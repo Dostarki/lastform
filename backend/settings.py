@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+from urllib.parse import urlencode, urlparse, urlunparse
 
 from dotenv import dotenv_values
 from models import PublicConfig, TaskConfig
@@ -24,10 +24,11 @@ def public_config():
                                ('repost', 'RELAY', 'Repost'), ('comment', 'VOICE', 'Reply')]:
         prefix = f'X_{key.upper()}'
         url = checked_x_url(values[f'{prefix}_LINK'])
-        if key == 'comment' and '/intent/' in urlparse(url).path:
-            parts = urlparse(url)
-            query = dict(parse_qsl(parts.query))
-            query['text'] = values['X_COMMENT_MESSAGE']
+        if key == 'comment':
+            # VOICE/Reply opens the X post composer prefilled with the share text;
+            # the repost link is appended below the text via the intent url param.
+            parts = urlparse('https://x.com/intent/post')
+            query = {'text': values['X_SHARE_TEXT'], 'url': checked_x_url(values['X_REPOST_LINK'])}
             url = urlunparse(parts._replace(query=urlencode(query)))
         tasks.append(TaskConfig(id=key, title=title, text=values[f'{prefix}_TEXT'], url=url, action=action))
     origin = values['PUBLIC_APP_URL'].rstrip('/')
