@@ -22,3 +22,23 @@ Kampanya ayarları sonraki API isteğinde dosyadan okunur. Tarayıcıyı yenilem
 Kullanıcı adı ve görev tamamlama kullanıcı beyanıdır; X hesabı sahipliği, gerçek takip/RT/yorum veya paylaşım doğrulanmaz. Cüzdan yalnızca EVM adresi olarak saklanır; özel anahtar, cüzdan bağlantısı veya işlem imzası istenmez. Cüzdan adresi herkese açık API yanıtlarına dahil edilmez.
 
 Taslak aynı tarayıcının yerel belleğinde tutulur; son talep MongoDB'ye kaydedilir. Hesap girişi bulunmadığından farklı tarayıcıdan mevcut bir kaydın özel alanları görüntülenemez/değiştirilemez. Her X kullanıcı adı için tek kayıt vardır.
+
+## X profil fotoğrafı
+
+Kullanıcı adıyla devam edildiğinde FxTwitter'ın herkese açık profil kaynağı sorgulanır. API anahtarı/OAuth gerekmez. Hesap sahipliği doğrulanmaz. Özel fotoğraf bulunamazsa, hesap erişilemezse veya kaynak geçici hata verirse mevcut karakter görseli korunur; katılım engellenmez.
+
+- `FXTWITTER_BASE_URL`, `FXTWITTER_USER_AGENT`: kaynak adresi ve LastZhood tanımlayıcısı
+- `X_LOOKUP_TIMEOUT_SECONDS`: kaynak isteğinin azami süresi
+- `X_AVATAR_MAX_BYTES`: indirilecek görsel boyutu sınırı
+- `X_AVATAR_CDN_HOSTS`: izin verilen X görsel sunucuları; varsayılan `pbs.twimg.com`
+- `X_AVATAR_CACHE_SECONDS`: başarılı fotoğraf adresi için metadata önbelleği (21600 saniye)
+- `X_AVATAR_FAILURE_CACHE_SECONDS`: başarısız sorgu önbelleği (60 saniye)
+- `X_LOOKUP_RATE_LIMIT`: istemci başına dakikalık fotoğraf uç noktası sınırı
+
+Bu sağlayıcı ayarları değiştiğinde backend yeniden başlatılmalıdır. MongoDB `x_avatar_metadata` koleksiyonunda yalnızca kullanıcı adı, fotoğraf adresi, kaynak ve UTC geçerlilik tarihi saklanır; fotoğraf/Base64 tutulmaz. Dosya yüklemesi yoktur. Görsel sunucuda geçici olarak işlenip PNG'ye dönüştürülür ve bellekte en fazla 64 görsel/1 saat tutulur.
+
+`GET /api/x/profile/{handle}` herkese açık fotoğraf durumunu döndürür. `GET /api/x/avatar/{handle}` yalnızca doğrulanmış X CDN adreslerinden görsel geçirir; kullanıcıdan URL kabul etmez. Tarayıcı/canvas bu ara bağlantıyı kullandığı için kart indirme ve panoya kopyalama çalışır. Görselin tamamı kırpılmadan karta yerleştirilir.
+
+Ara sunucular HTTP `Cache-Control` başlığını `no-store` olarak sıkılaştırabilir. Bu, uygulamanın metadata/bellek önbelleğini kapatmaz; tekrar isteğinde `X-Avatar-Cache: HIT` gerçek bellek kullanımını belirtir. Tarayıcı/CDN önbelleğine bağımlı çalışılmaz.
+
+FxTwitter üçüncü taraf, anahtarsız ve en iyi çaba esaslı bir kaynaktır; tüm hesaplar için kesintisiz/fotoğraf güncelliği garantisi yoktur. Varsayılan X silüeti, özel profil fotoğrafı sayılmadığından mevcut karaktere dönüş yapılır.

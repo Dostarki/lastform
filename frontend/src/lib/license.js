@@ -3,7 +3,7 @@ import { numberLabel } from './api';
 
 const portrait = ['000001111100000','000111111111000','001111111111100','001122222221100','001222222222100','000222222222000','000221222122000','000222222222000','000022222220000','000002222200000','000033333330000','003333333333300','033333333333330','333333333333333','333333333333333'];
 
-export function drawLicense(canvas, agent, handle) {
+export function drawLicense(canvas, agent, handle, profilePhoto = null) {
   const ctx = canvas.getContext('2d');
   canvas.width = 760; canvas.height = 900;
   ctx.fillStyle = '#c8ccba'; ctx.fillRect(0, 0, 760, 900);
@@ -27,6 +27,15 @@ export function drawLicense(canvas, agent, handle) {
     ctx.fillStyle = pixel === '1' ? '#a5af81' : pixel === '2' ? ((x + y) % 3 ? '#c4c99d' : '#849672') : ((x * y) % 4 ? '#768767' : '#a6b18c');
     ctx.fillRect(99 + x * 18, 254 + y * 18, 17, 17);
   }));
+  if (profilePhoto) {
+    // Keep the entire original profile photo visible (no face cropping), also in PNG exports.
+    ctx.fillStyle = '#253027'; ctx.fillRect(55, 225, 360, 325);
+    const scale = Math.min(330 / profilePhoto.naturalWidth, 300 / profilePhoto.naturalHeight);
+    const width = profilePhoto.naturalWidth * scale;
+    const height = profilePhoto.naturalHeight * scale;
+    ctx.drawImage(profilePhoto, 55 + (360 - width) / 2, 225 + (325 - height) / 2, width, height);
+    ctx.strokeStyle = '#798a66'; ctx.lineWidth = 1; ctx.strokeRect(55, 225, 360, 325);
+  }
   text('IDENTITY', 450, 252, '14px "IBM Plex Mono", monospace');
   text('SELF-DECLARED', 450, 280, '600 17px "IBM Plex Mono", monospace');
   text('CELL', 450, 334, '14px "IBM Plex Mono", monospace');

@@ -9,6 +9,7 @@ Veritabanı ise mongodb olsun. X follow-rt-COMMENT yazı ve linkleri ise .env de
 Tasarım renk konusuna gelirsek eğer daha böyle project zomboid oyun tarzı olsun. Yapmadan önce bana örnekler göster.
 
 ## Kullanıcı kararları
+- Profil fotoğrafı isteği: "X nicki girince X profil resmini çekmeli". Kullanıcı anahtarsız, herkese açık kaynakla almayı ve kaynak erişilemezse mevcut karakterin kalmasını seçti.
 - Son kullanıcı isteği: "Proje adı LastZhood olacak. Siteyi ona göre isim yap. x.com/LastZhood". Uygulama markası LastZhood, resmî hesap @LastZhood.
 - Kodlamadan önce üç görsel konsept görmek istiyor: kıyamet sonrası terminal, yıpranmış hayatta kalma panosu, retro askerî arayüz.
 - Aynı zamanda orijinal sitenin düzenine yakın kalınmasını; renk, tipografi ve doku değişikliklerini seçti.
@@ -71,6 +72,23 @@ Tasarım renk konusuna gelirsek eğer daha böyle project zomboid oyun tarzı ol
 3. Askerî radar: https://static.prod-images.emergentagent.com/jobs/a2dcf251-5c25-48b6-bb5b-fcddb74891ae/images/c9cae18d6079489b15507949c8af294fb5a9048846f31441f8c714d0df2fbf71.jpeg
 
 ## Önceliklendirilmiş kalan işler
-- P0: Yok; istenen çekirdek akış ve LastZhood isim güncellemesi tamamlandı.
+- P0: Yok; çekirdek akış, LastZhood isim güncellemesi ve anahtarsız X profil fotoğrafı tamamlandı.
 - P1 (isteğe bağlı kampanya girdisi): Kullanıcı belirli gönderi bağlantısı paylaşırsa beğeni/RT/yorum görevlerini o gönderiye yönlendirmek. Şimdiki profil akışı kullanılabilir durumdadır.
 - P2 önerileri (henüz kullanıcı istemedi): Referans davet sıralaması; hayatta kalma temalı farklı ajan portreleri; Türkçe/İngilizce dil seçimi.
+
+## X profil fotoğrafı — 2026-07-19
+- Kullanıcı adıyla CONNECT X üzerinden devam edilince gerçek herkese açık profil fotoğrafı sorgulanıyor. Yükleme durumu gösterilir; sorgu başarısız olsa da konsola geçiş engellenmez.
+- Entegrasyon playbook'u alındı. Kaynak: FxTwitter v2 `/2/profile/{handle}`, anahtar/OAuth yok. Bu işlem kullanıcı adı sahipliği veya X görevleri doğrulaması değildir.
+- Fotoğraf hem operatör alanında hem ajan lisansı canvas'ında görünür; PNG indirme, görsel panoya kopyalama ve herkese açık kart sayfası aynı fotoğrafı kullanır. Görselin tamamı contain yöntemiyle korunur.
+- Eksik/varsayılan/korumalı/erişilemeyen fotoğraf durumunda mevcut piksel karakteri gösterilir. Kullanıcı adı değişince eski hesabın fotoğrafı anında kaldırılır. Fotoğraf yüklenirken yanlış görsel indirilmemesi için dışa aktarma düğmeleri geçici devre dışıdır.
+- `backend/avatar_provider.py`: normalize/allowlist, süre ve yanıt boyutu sınırları, eşzamanlı sorgu birleştirme, Mongo metadata önbelleği. `backend/x_avatar.py`: profil API, istek limiti, geçici görsel proxy, raster doğrulama/PNG dönüştürme ve bellek önbelleği.
+- Yeni API: GET `/api/x/profile/{handle}` ve `/api/x/avatar/{handle}`. Görsel hedefi istemciden kabul edilmez. Yalnızca izinli HTTPS X CDN `/profile_images/` adresleri indirilir; yönlendirmeler izlenmez.
+- MongoDB `x_avatar_metadata`: handle/avatar_url/source/expires_at; `_id` dışlanır, UTC datetime TTL index kullanılır. Başarılı metadata 6 saat, başarısız sorgu 60 saniye; binary/Base64 veya diğer profil bilgileri saklanmaz.
+- Görsel byte'ları dosya olarak saklanmaz; sunucu belleğinde en fazla 64 adet, en fazla 1 saat. Kullanıcı dosya yüklemesi olmadığı için nesne depolama entegrasyonu gerekmiyor.
+- `.env`: FXTWITTER_BASE_URL, FXTWITTER_USER_AGENT, X_LOOKUP_TIMEOUT_SECONDS, X_AVATAR_MAX_BYTES, X_AVATAR_CACHE_SECONDS, X_AVATAR_FAILURE_CACHE_SECONDS, X_AVATAR_CDN_HOSTS, X_LOOKUP_RATE_LIMIT. Kullanım belgesi backend/CONFIGURATION.md güncel.
+- Frontend: lib/xProfile.js + hooks/useXAvatar.js ortak promise önbelleği; OperatorIdentity ve AgentLicense aynı API'den yükler. CORS-safe proxy sayesinde canvas taint oluşmuyor.
+- Gerçek kaynak testi: NASA fotoğrafı 400×400 PNG olarak alındı ve karta kondu. İlk geçici 404 kaynak hatası 60 saniyelik negatif önbellek süresi sonrasında kendiliğinden düzeldi; best-effort davranışı doğrulandı.
+- Kaynak, test anında @LastZhood için varsayılan X fotoğrafı döndürdü; özel fotoğraf bulunmadığı için karakter korunuyor. Bu, kullanıcı hesabının gerçek güncel durumuna dair garanti değil, üçüncü taraf kaynak yanıtıdır.
+- Test raporu iteration_3.json: UI NASA/fallback/handle switch/export ve mobil 390/320 geçti; 19/20 backend testi geçti. Tek fark, ara sunucunun HTTP Cache-Control başlığını no-store yapmasıydı; fotoğraf akışı bozuk değildi.
+- Gerçek önbellek davranışı `X-Avatar-Cache: HIT` ile ölçülebilir yapıldı. Test, ara sunucu no-store politikasını kabul edip aynı görselin sunucu belleğinden tekrar döndüğünü doğrulayacak şekilde düzeltildi.
+- Son doğrulama: 20/20 backend testi geçti (7 avatar + 13 mevcut kayıt regresyonu). JUnit: `/app/test_reports/pytest/avatar_final_results.xml`; kapanış notu `/app/test_reports/avatar_final_verification.md`. `yarn build` başarılı. Production API'ler gerçek; yalnızca test izolasyonunda kontrollü sahte yanıtlar kullanıldı.
