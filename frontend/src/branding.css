@@ -1,0 +1,11 @@
+.lastzhood-wordmark { font-size: 134px; }
+.home-main { padding-top: 48px; padding-bottom: 58px; }
+.reply-draft { padding: 12px 0 0; display: flex; align-items: flex-start; gap: 13px; }
+.reply-draft p { font-size: 10px; line-height: 1.8; color: #a7b393; margin: 0; flex: 1; }
+.reply-draft button { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; color: #dcc475; font-size: 9px; padding: 5px 0; }
+.reply-draft button:hover { color: #eedb9c; }
+@media (min-width: 1600px) { .lastzhood-wordmark { font-size: 144px; } .home-main { min-height: 550px; } }
+@media (max-width: 1100px) { .home-main { min-height: 550px; } }
+@media (max-width: 767px) { .lastzhood-wordmark { font-size: 72px; } .lastzhood-wordmark .hero-cursor { width: 15px; height: 15px; margin-left: 8px; } .home-main { min-height: 550px; padding-top: 60px; padding-bottom: 90px; } }
+@media (max-width: 380px) { .lastzhood-wordmark { font-size: 64px; } .lastzhood-wordmark .hero-cursor { width: 13px; height: 13px; margin-left: 6px; } }
+@media (max-width: 350px) { .lastzhood-wordmark { font-size: 56px; } }
